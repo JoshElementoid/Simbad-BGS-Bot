@@ -102,6 +102,8 @@ async def oops (ctx, *args):
     
     
     elif command == "vulnerability":
+        # ctrl_7: less than 7 factions in system
+        # ctrl_retreat: system with at least 1 retreating faction
         ctrl_7, ctrl_retreat = simbad.vulnerability()
         
         template = "{0:15} |{1:5} | {2:15}\n" 
@@ -140,6 +142,7 @@ async def oops (ctx, *args):
     
     
     elif command == "recon":
+        # List of systems that haven't been updated in X days
         days = int(args[1])
         template = "{0:15} | {1:15}\n" 
         
@@ -167,6 +170,12 @@ async def oops (ctx, *args):
         
         if len(args) > 1:
             detail = args[1].lower()
+        
+        # BGS status report
+        # d_inf = highest_inf - second_highest_inf 
+        # ok: d_inf > 30%
+        # caution: 20% > d_inf > 10%
+        # warning: d_inf < 10%
         
         ok, caution, warning = simbad.status()
         
