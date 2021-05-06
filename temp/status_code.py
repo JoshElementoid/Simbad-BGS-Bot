@@ -5,7 +5,7 @@
 
 import numpy as np
 
-class bgs_inf(object):
+class bgs_info(object):
 
         def __init__(self, ctrl_path, inf_path, fac_name="Simbad Regime", update=False):
         
