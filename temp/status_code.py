@@ -5,91 +5,128 @@
 
 import numpy as np
 
-def status (self):
-    dinf = [bgs_info.get_recon_info(sys)
-            for sys in self.ctrl_full
-    ]
-    
-    dinf = sorted(dinf, key=lambda x: x[2])
-    
-    g,y,r = bgs_info.status_report(dinf)
-    
-            
-    return g,y,r 
+class bgs_inf(object):
 
-
-### Helper functions for status ###
-
-@staticmethod 
-def get_recon_info (sys):
-    name = sys["name"]
-    inf_diff = bgs_info.sys_status(sys)
-    last_updated = sys["updated_at"]
-    
-    return [name, inf_diff, last_updated]
-
-
-@staticmethod
-def sys_status (sys):
-    """
-    Given a system, returns the difference between the INF of highest inf
-    and the INF of the second highest inf factions
-    
-    """
-    
-    fac_inf = bgs_info.sys_fac_influences(sys)
-    assert fac_inf == sorted(fac_inf, key=lambda x: -x[1])    
-    highest_inf = fac_inf[0][1]
-    inf_diff = highest_inf - fac_inf[1][1]
-    
-    return inf_diff
-
-
-@staticmethod
-def status_report (inf_diff_list, g=20, y=(20, 10), r=10):
-    """
-    Returns green, yellow, red, which are are systems that are OKAY, CAUTION,
-    WARNING, respectively. 
-    
-    Parameters: 
-        inf_diff_list - A list of [system, inf_difference, last_updated]. This
-        is also the output of "get_recon_info()"
+        def __init__(self, ctrl_path, inf_path, fac_name="Simbad Regime", update=False):
         
-        g, y, r: thresholds for OK, CAUTION, WARNING
+        """ 
+        The bgs_info class needs 2 things to initialize:
+            1) path to a json with controlled system information, and
+            2) path to a json with the faction influence information.
         
-    RETURNS:
-        green - list of [system_name, inf_diff, last_updated] for OK systems
-        yellow - same but for caution
-        red - same but for warning
-    """
-    yu, yl = y   # upper/lower bound for "CAUTION" 
+        Both must be in Elite BGS's API response format.
+        
+        BGS information comes from the 2 json files.
+        
+        """
+        
+        self.ctrl_path = ctrl_path
+        self.inf_path = inf_path
+        self.fac_name = fac_name
     
-    inf_diff_list = sorted(inf_diff_list, key=lambda x: -x[1])  # sort by inf_diff
+        if update:
+            self.update_info()
     
-    names = np.array([x[0] for x in inf_diff_list])
-    inf = 100*np.array([x[1] for x in inf_diff_list], dtype="float32")
-    last_updated = np.array([x[2] for x in inf_diff_list])
-    
-    
-    # Find indices for OK, CAUTION, and WARNING
-    index_g = np.argwhere(inf>g)    
-    index_y = np.argwhere(np.logical_and(yu>inf, inf>yl))
-    index_r = np.argwhere(inf<r)
-    
-    # Stacking [system_name, inf_diff, and last_updated]
-    green = np.hstack( 
-        (names[index_g], inf[index_g], last_updated[index_g]) 
-    )
-    
-    yellow = np.hstack(
-        (names[index_y], inf[index_y], last_updated[index_y])
-    )
-    
-    red = np.hstack(
-        (names[index_r], inf[index_r], last_updated[index_r])
+        with open(ctrl_path, "r") as f:
+            self.ctrl_full = json.load(f)
+            f.close()   
+        
+        with open(inf_path, "r") as f:
+            self.fac_inf = json.load(f)
+            f.close()
+        
+        # Sort by your influence:
+        self.ctrl_full = sorted(self.ctrl_full, 
+                                key=lambda x: -bgs_info.get_fac_inf(x, self.fac_name))
+        
+        return
+        
+        
+    def status (self):
+        dinf = [bgs_info.get_recon_info(sys)
+                for sys in self.ctrl_full
+        ]
+
+        dinf = sorted(dinf, key=lambda x: x[2])
+
+        g,y,r = bgs_info.status_report(dinf)
+
+
+        return g,y,r 
+
+
+    ### Helper functions for status ###
+
+    @staticmethod 
+    def get_recon_info (sys):
+        name = sys["name"]
+        inf_diff = bgs_info.sys_status(sys)
+        last_updated = sys["updated_at"]
+
+        return [name, inf_diff, last_updated]
+
+
+    @staticmethod
+    def sys_status (sys):
+        """
+        Given a system, returns the difference between the INF of highest inf
+        and the INF of the second highest inf factions
+
+        """
+
+        fac_inf = bgs_info.sys_fac_influences(sys)
+        assert fac_inf == sorted(fac_inf, key=lambda x: -x[1])    
+        highest_inf = fac_inf[0][1]
+        inf_diff = highest_inf - fac_inf[1][1]
+
+        return inf_diff
+
+
+    @staticmethod
+    def status_report (inf_diff_list, g=20, y=(20, 10), r=10):
+        """
+        Returns green, yellow, red, which are are systems that are OKAY, CAUTION,
+        WARNING, respectively. 
+
+        Parameters: 
+            inf_diff_list - A list of [system, inf_difference, last_updated]. This
+            is also the output of "get_recon_info()"
+
+            g, y, r: thresholds for OK, CAUTION, WARNING
+
+        RETURNS:
+            green - list of [system_name, inf_diff, last_updated] for OK systems
+            yellow - same but for caution
+            red - same but for warning
+        """
+        yu, yl = y   # upper/lower bound for "CAUTION" 
+
+        inf_diff_list = sorted(inf_diff_list, key=lambda x: -x[1])  # sort by inf_diff
+
+        names = np.array([x[0] for x in inf_diff_list])
+        inf = 100*np.array([x[1] for x in inf_diff_list], dtype="float32")
+        last_updated = np.array([x[2] for x in inf_diff_list])
+
+
+        # Find indices for OK, CAUTION, and WARNING
+        index_g = np.argwhere(inf>g)    
+        index_y = np.argwhere(np.logical_and(yu>inf, inf>yl))
+        index_r = np.argwhere(inf<r)
+
+        # Stacking [system_name, inf_diff, and last_updated]
+        green = np.hstack( 
+            (names[index_g], inf[index_g], last_updated[index_g]) 
         )
-    
-    return green, yellow, red
+
+        yellow = np.hstack(
+            (names[index_y], inf[index_y], last_updated[index_y])
+        )
+
+        red = np.hstack(
+            (names[index_r], inf[index_r], last_updated[index_r])
+            )
+
+        return green, yellow, red
     
     
 ######################
