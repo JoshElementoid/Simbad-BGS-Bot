@@ -6,8 +6,8 @@
 import numpy as np
 
 class bgs_info(object):
-
-        def __init__(self, ctrl_path, inf_path, fac_name="Simbad Regime", update=False):
+        
+    def __init__(self, ctrl_path, inf_path, fac_name="Simbad Regime", update=False):
         
         """ 
         The bgs_info class needs 2 things to initialize:
