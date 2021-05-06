@@ -95,12 +95,12 @@ def status_report (inf_diff_list, g=20, y=(20, 10), r=10):
 ######################
 ### FRONTEND STUFF ###
 ######################
-    
-   @bot.command()
-   async def oops (ctx, *args):
-   
-   # stuff for $oops expansion, $oops recon, etc. here 
-   
+
+@bot.command()
+async def oops (ctx, *args):
+
+# stuff for $oops expansion, $oops recon, etc. here 
+
     elif command == "status":  
         detail = "short"
         
